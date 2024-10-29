@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import aiofiles
 from models import Message, UploadedFile, Chat
-from messenger.shcemas import MessageCreate
+from .shcemas import MessageCreate
 import uvicorn
 
 DATABASE_URL = "mysql+aiomysql://mytrade:jh2jh8&#7S1@!!DFERkj_@127.0.0.1/mytrade"
