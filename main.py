@@ -1,21 +1,22 @@
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import Dict, List
+from typing import Dict
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 import aiofiles
 from models import Message, UploadedFile, Chat
 from schemas import MessageCreate
 import uvicorn
 
-DATABASE_URL = "mysql+aiomysql://mytrade:jh2jh8&#7S1@!!DFERkj_@127.0.0.1/mytrade"
+DATABASE_URL = 'mysql+pymysql://mytrade:jh2jh8%26%237S1%40%21%21DFERkj_@127.0.0.1:3306/mytrade'
+
 app = FastAPI()
 
 
 engine = create_async_engine(DATABASE_URL, echo=True)
-AsyncSessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -84,8 +85,10 @@ async def send_message(message: MessageCreate, db: AsyncSession = Depends(get_db
     # Проверка существования чата между отправителем и получателем
     chat = await db.execute(
         select(Chat).where(
-            (Chat.user1_id == message.sender_id) & (Chat.user2_id == message.receiver_id) |
-            (Chat.user1_id == message.receiver_id) & (Chat.user2_id == message.sender_id)
+            or_(
+                (Chat.user1_id == message.sender_id) & (Chat.user2_id == message.receiver_id),
+                (Chat.user1_id == message.receiver_id) & (Chat.user2_id == message.sender_id)
+            )
         )
     )
     chat = chat.scalars().first()
@@ -103,7 +106,7 @@ async def send_message(message: MessageCreate, db: AsyncSession = Depends(get_db
         receiver_id=message.receiver_id,
         content=message.content,
         file_id=message.file_id,
-        chat_id=chat.id  # Ссылка на чат
+        chat_id=chat.id
     )
     db.add(db_message)
     await db.commit()
@@ -113,8 +116,12 @@ async def send_message(message: MessageCreate, db: AsyncSession = Depends(get_db
 
 @app.get("/messages/{chat_id}")
 async def get_messages(chat_id: int, db: AsyncSession = Depends(get_db)):
-    # Получаем последние 10 сообщений из чата
-    result = await db.execute(select(Message).where(Message.chat_id == chat_id).order_by(Message.timestamp.desc()).limit(10))
+    result = await db.execute(
+        select(Message)
+        .where(Message.chat_id == chat_id)
+        .order_by(Message.timestamp.desc())
+        .limit(10)
+    )
     messages = result.scalars().all()
     return messages
 

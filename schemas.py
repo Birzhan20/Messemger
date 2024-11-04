@@ -5,4 +5,4 @@ class MessageCreate(BaseModel):
     sender_id: int
     receiver_id: int
     content: str
-    file: str | None = None
+    file_id: int | None = None

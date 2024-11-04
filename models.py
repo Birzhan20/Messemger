@@ -47,6 +47,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"))
     receiver_id = Column(Integer, ForeignKey("users.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id"))
     content = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
     file_id = Column(Integer, ForeignKey("uploaded_files.id"), nullable=True)
