@@ -6,6 +6,8 @@ from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 import aiofiles
+from starlette.responses import FileResponse
+
 from models import Message, UploadedFile, Chat
 from schemas import MessageCreate
 import uvicorn
@@ -78,6 +80,19 @@ async def upload_file(file: UploadFile = File(...), db: AsyncSession = Depends(g
     await db.refresh(db_file)
 
     return {"file_location": file_location, "file_id": db_file.id}
+
+
+@app.get("/download/{file_id}")
+async def download_file(file_id: int, db: AsyncSession = Depends(get_db)):
+    # Получаем информацию о файле из базы данных по file_id
+    db_file = await db.execute(select(UploadedFile).filter(UploadedFile.id == file_id))
+    db_file = db_file.scalars().first()
+
+    if db_file is None:
+        raise HTTPException(status_code=404, detail="Файл не найден")
+
+    # Возвращаем файл для скачивания
+    return FileResponse(path=db_file.file_path, filename=db_file.filename)
 
 
 @app.post("/messages/")
