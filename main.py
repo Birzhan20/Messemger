@@ -10,7 +10,7 @@ from models import Message, UploadedFile, Chat
 from schemas import MessageCreate
 import uvicorn
 
-DATABASE_URL = 'mysql+pymysql://mytrade:jh2jh8%26%237S1%40%21%21DFERkj_@0.0.0.0:3306/mytrade'
+DATABASE_URL = 'mysql+aiomysql://mytrade:jh2jh8%26%237S1%40%21%21DFERkj_@0.0.0.0:3306/mytrade'
 
 app = FastAPI()
 
